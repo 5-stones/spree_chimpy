@@ -2,8 +2,7 @@ Spree::Order.class_eval do
   has_one :source, class_name: 'Spree::Chimpy::OrderSource'
 
   around_save :handle_cancelation
-  after_create :notify_mail_chimp
-  after_save :notify_mail_chimp
+  after_commit :notify_mail_chimp
 
   def notify_mail_chimp
 
