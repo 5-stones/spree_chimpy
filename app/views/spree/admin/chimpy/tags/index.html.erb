@@ -1,0 +1,42 @@
+<% content_for :page_title do %>
+  <%= Spree.t(:tags) %>
+<% end %>
+
+<% content_for :page_actions do %>
+  <%= button_link_to Spree.t(:new_tag), new_admin_chimpy_tag_url, class: "btn-success", icon: 'add', id: 'admin_new_tag' %>
+<% end if can? :create, Spree::Chimpy::Tag %>
+
+<% if @tags.any? %>
+  <% @tags = @tags.page(params[:page]).per(params[:per_page] || 15) %>
+  <%= render partial: 'spree/admin/shared/index_table_options', locals: { collection: @tags } %>
+
+  <table class="table" id="listing_tags" data-hook>
+    <thead>
+      <tr data-hook="admin_tags_index_headers">
+        <th>Name</th>
+        <th>External ID</th>
+        <th data-hook="admin_tags_index_header_actions" class="actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+    <% @tags.each do |tag| %>
+      <tr data-hook="admin_tags_index_rows" class="<%= cycle('odd', 'even') %>">
+        <td><%= link_to tag.name, edit_admin_chimpy_tag_path(tag) %></td>
+        <td><%= link_to tag.external_id, edit_admin_chimpy_tag_path(tag.external_id) %></td>
+        <td class='actions actions-1' data-hook="admin_tags_index_row_actions">
+          <%= link_to_edit_url edit_admin_chimpy_tag_path(tag), title: "admin_edit_#{dom_id(tag)}", no_text: true %>
+          <%= link_to_delete tag, no_text: true if can?(:delete, tag) %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <div class="alert alert-info no-objects-found">
+    <%= Spree.t(:no_resource_found, resource: plural_resource_name(Spree::Chimpy::Tag)) %>,
+    <%= link_to(Spree.t(:add_one), new_admin_chimpy_tag_url) if can? :create, Spree::Chimpy::Tag %>!
+  </div>
+<% end %>
+
+<%= #render 'spree/admin/shared/index_table_options', collection: @tags, simple: true
+%>

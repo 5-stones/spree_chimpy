@@ -1,0 +1,46 @@
+<% content_for :page_title do %>
+  <%= Spree.t(:book_clubs) %>
+<% end %>
+
+<% content_for :page_actions do %>
+  <%= button_link_to Spree.t(:new_book_club), new_admin_book_club_url, class: "btn-success", icon: 'add', id: 'admin_new_book_club' %>
+<% end if can? :create, Spree::BookClub %>
+
+<% if @book_clubs.any? %>
+  <% @book_clubs = @book_clubs.page(params[:page]).per(params[:per_page] || 15) %>
+  <%= render partial: 'spree/admin/shared/index_table_options', locals: { collection: @book_clubs } %>
+
+  <table class="table" id="listing_book_clubs" data-hook>
+    <thead>
+      <tr data-hook="admin_book_clubs_index_headers">
+        <th>Name</th>
+        <th>Organizer</th>
+        <th>Group</th>
+        <th>Prototype</th>
+        <th data-hook="admin_book_clubs_index_header_actions" class="actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+    <% @book_clubs.each do |book_club| %>
+      <tr data-hook="admin_book_clubs_index_rows" class="<%= cycle('odd', 'even') %>">
+        <td><%= link_to book_club.name, edit_admin_book_club_path(book_club) %></td>
+        <td><%= link_to book_club.organizer.email, edit_admin_user_path(book_club.organizer) %></td>
+        <td><%= link_to book_club.group.name, edit_admin_group_path(book_club.group) %></td>
+        <td><%= link_to book_club.schedule.name, edit_admin_event_schedule_prototype_path(book_club.schedule) %></td>
+        <td class='actions actions-1' data-hook="admin_book_clubs_index_row_actions">
+          <%= link_to_edit_url edit_admin_book_club_path(book_club), title: "admin_edit_#{dom_id(book_club)}", no_text: true %>
+          <%= link_to_delete book_club, no_text: true if can?(:delete, book_club) %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <div class="alert alert-info no-objects-found">
+    <%= Spree.t(:no_resource_found, resource: plural_resource_name(Spree::BookClub)) %>,
+    <%= link_to(Spree.t(:add_one), new_admin_book_club_url) if can? :create, Spree::BookClub %>!
+  </div>
+<% end %>
+
+<%= #render 'spree/admin/shared/index_table_options', collection: @book_clubs, simple: true
+%>

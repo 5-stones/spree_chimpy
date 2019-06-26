@@ -5,4 +5,10 @@ Spree::Core::Engine.add_routes do
   namespace :chimpy, path: "" do
     resource :subscribers, only: [:create]
   end
+
+  namespace :admin, path: Spree.admin_path do
+    namespace :chimpy, path: 'mailchimp' do
+      resources :tags
+    end
+  end
 end
