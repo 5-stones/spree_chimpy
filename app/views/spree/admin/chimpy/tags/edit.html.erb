@@ -1,0 +1,14 @@
+<% content_for :page_title do %>
+  <%= link_to Spree.t(:tags), spree.admin_chimpy_tags_url %> /
+  <%= @chimpy_tag.name.capitalize %>
+<% end %>
+
+<%= render partial: 'spree/admin/shared/error_messages', locals: { target: @chimpy_tag } %>
+
+<%= form_for [:admin, @chimpy_tag] do |f| %>
+  <fieldset>
+    <%= render partial: 'form', locals: { f: f } %>
+    <%= render partial: 'spree/admin/shared/edit_resource_links' %>
+  </fieldset>
+<% end %>
+<br>

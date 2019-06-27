@@ -1,0 +1,25 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h1 class="panel-title">Upcoming Events</h1>
+  </div>
+  <div class="panel-body">
+    <table class="table table-striped">
+      <thead>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>&nbsp</th>
+      </thead>
+      <% if @book_club.events.any? %>
+        <% @book_club.events.each do |event| %>
+          <tr>
+            <td><%= event.start_date %></td>
+            <td><%= event.end_date %></td>
+            <td><%= link_to 'View Event', edit_admin_event_path(event) %></td>
+          </tr>
+        <% end %>
+      <% else %>
+        <tr><td>No upcoming events found</td><td></td></tr>
+      <% end %>
+    </table>
+  </div>
+</div>

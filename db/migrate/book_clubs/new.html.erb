@@ -1,0 +1,13 @@
+<% content_for :page_title do %>
+  <%= link_to Spree.t(:book_club), spree.admin_book_clubs_url %> /
+  <%= Spree.t(:new_event_schedule) %>
+<% end %>
+
+<%= render partial: 'spree/admin/shared/error_messages', locals: { target: @book_club } %>
+
+<%= form_for [:admin, @book_club] do |f| %>
+  <fieldset>
+    <%= render partial: 'form', locals: { f: f } %>
+    <%= render partial: 'spree/admin/shared/new_resource_links' %>
+  </fieldset>
+<% end %>

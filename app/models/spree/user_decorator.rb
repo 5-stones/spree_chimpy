@@ -17,7 +17,16 @@ if Spree.user_class
       end
     end
 
-  private
+    def add_tag(tag)
+
+    end
+
+    def remove_tag(tag)
+
+    end
+
+    private
+
     def subscription
       Spree::Chimpy::Subscription.new(self)
     end

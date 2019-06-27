@@ -1,0 +1,36 @@
+<div data-hook="admin_book_club_form_fields">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h1 class="panel-title">Overview</h1>
+    </div>
+    <div class="panel-body">
+      <div class="row">
+        <div class="col-sm-12 col-md-6">
+          <%= f.field_container :name, class: ["form-group"], 'data-hook' => "book_club_name" do %>
+            <%= f.label :name, Spree.t(:name) %> <span class="required">*</span>
+            <%= f.text_field :name, class: 'form-control' %>
+            <%= f.error_message_on :name %>
+          <% end %>
+        </div>
+
+        <div class="form-group field col-sm-12 col-md-6">
+          <%= f.label :schedule_id, Spree.t(:event_schedule_prototype) %> <span class="required">*</span>
+          <%= f.collection_select(:schedule_id, Spree::EventSchedulePrototype.order(:name), :id, :name, {}, { class: 'select2' }) %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="form-group field col-sm-12 col-md-6">
+          <%= f.label :organizer_id, Spree.t(:organizer) %> <span class="required">*</span>
+          <%= f.collection_select(:organizer_id, Spree::User.order(:email), :id, :email, {}, { class: 'select2' }) %>
+        </div>
+
+        <div class="form-group field col-sm-12 col-md-6">
+          <%= f.label :group_id, Spree.t(:group) %> <span class="required">*</span>
+          <%= f.collection_select(:group_id, Spree::Group.order(:name), :id, :name, {}, { class: 'select2' }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div data-hook="additional_book_club_fields"></div>
+</div>
