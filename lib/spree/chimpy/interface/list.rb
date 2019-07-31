@@ -121,15 +121,63 @@ module Spree::Chimpy
       end
 
       def find_list_id(name)
-        # if mailchimp errors we shouldn't fail
+        list = search_lists(name.downcase)
+
+        if (list)
+          return list["id"]
+        else
+          return nil
+        end
+      end
+
+      def search_lists(list_name, page_size = 10, page_number = 1)
+        # NOTE: MailChimp doesn't use a page number parameter -- calculate the offset instead
+        offset = page_size * (page_number - 1)
+
         begin
           response = api_call
-            .retrieve(params: {"fields" => "lists.id,lists.name"})
+            .retrieve(params: {count: page_size, offset: offset, fields: "lists.id,lists.name"})
             .body
-          list = response["lists"].detect { |r| r["name"] == name }
-          list["id"] if list
-        rescue Gibbon::MailChimpError
-          Rails.logger.error "Unable to connect to mailchimp."
+
+          lists = response["lists"]
+
+          if (lists.size == 0)
+            # No lists found, return nil
+            return nil
+          else
+            list = lists.detect { |r| r["name"] == list_name }
+
+            if (list)
+              # Return the list if we found it
+              return list
+            elsif (lists.size == page_size)
+              # We didn't find the list, but there may be more than one page -- try the next one
+              return search_lists(list_name, page_size, page_number + 1)
+              # NOTE: The response object returned from the API call does not have the `total_items` field mentioned in the
+              # API documentation, so we don't know how many pages there are.
+              #
+              # If the returned list of audiences is equal to the passed page_size, but we do not find the audience
+              # we're looking for, that is a good indication that there is a second page of results, so we'll try
+              # fetching it.
+              #
+              # If the response comes back with zero items, we'll know we've reached the end
+            else
+              # We found nothing, and because lists.size != page_size, we know there are no more lists available.
+              return nil
+            end
+          end
+
+        rescue Gibbon::MailChimpError => e
+          # Log the error to assist with debugging, but do not fail.
+          Rails.logger.error({
+            class: 'SpreeChimpy::Interface::List',
+            scope: 'Retrieving Lists from MailChimp',
+            params: { list_name: list_name, page_size: page_size, page_number: page_number, calculated_offset: offset },
+            message: e.message,
+            trace: e.backtrace.join("\n"),
+            error: e.inspect
+          })
+
           return nil
         end
       end
@@ -145,20 +193,82 @@ module Spree::Chimpy
       end
 
       def create_segment
-        log "Creating segment #{@segment_name}"
+        begin
+          Rails.logger.info({
+            class: 'SpreeChimpy::Interface::List',
+            scope: 'Creating Segment from MailChimp',
+            params: { segment_name: @segment_name, },
+            message: "#{@segment_name} segment does not exist. Attempting to create it",
+          })
 
-        result = api_list_call.segments.create(body: { name: @segment_name, static_segment: []})
-        @segment_id = result["id"]
+          result = api_list_call.segments.create(body: { name: @segment_name, static_segment: []})
+          @segment_id = result["id"]
+        rescue Gibbon::MailChimpError => e
+          # Log the error to assist with debugging, but do not fail.
+          Rails.logger.error({
+            class: 'SpreeChimpy::Interface::List',
+            scope: 'Creating Segment from MailChimp',
+            params: { segment_name: @segment_name, },
+            message: e.message,
+            trace: e.backtrace.join("\n"),
+            error: e.inspect
+          })
+
+          return nil
+        end
       end
 
       def find_segment_id
-        response = api_list_call
-          .segments
-          .retrieve(params: {"fields" => "segments.id,segments.name"})
-          .body
-        segment = response["segments"].detect {|segment| segment['name'].downcase == @segment_name.downcase }
+        segment = search_segments(@segment_name)
 
-        segment['id'] if segment
+        return segment['id'] if segment
+      end
+
+      def search_segments(name, page_size = 10, page_number = 1)
+
+        # NOTE: MailChimp doesn't use a page number parameter -- calculate the offset instead
+        offset = page_size * (page_number - 1)
+
+        begin
+          response = api_list_call.segments
+            .retrieve(params: {count: page_size, offset: offset, fields: "segments.id,segments.name"})
+            .body
+
+          segments = response["segments"]
+
+          if (segments.size == 0)
+            # No lists found, return nil
+            return nil
+          else
+            segment = segments.detect { |segment| segment['name'].downcase == name.downcase }
+
+            if (segment)
+              # Return the list if we found it
+              return segment
+            elsif (segments.size == page_size)
+              # We didn't find the list, but there may be more than one page -- try the next one
+              return search_segments(name, page_size, page_number + 1)
+              # NOTE: See the NOTE comment in search_lists as this has the same limitations
+            else
+              # We found nothing, and because segments.size != page_size, we know there are no more segments available.
+              return nil
+            end
+          end
+
+        rescue Gibbon::MailChimpError => e
+          # Log the error to assist with debugging, but do not fail.
+          Rails.logger.error({
+            class: 'SpreeChimpy::Interface::List',
+            scope: 'Retrieving Segments from MailChimp',
+            params: { segment_name: name, page_size: page_size, page_number: page_number, calculated_offset: offset },
+            message: e.message,
+            trace: e.backtrace.join("\n"),
+            error: e.inspect
+          })
+
+          return nil
+        end
+
       end
 
       def segment_id
